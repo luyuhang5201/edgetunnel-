@@ -1,4 +1,4 @@
-# edgetunnel-
+# edgetunnel-（不太会用markdown所以写的格式比较烂）
 基于源edgetunnel 的个人修改版，版权归原作者所有
 ## 新加入的 NAT64 转换功能主要用于在 IPv6-only 环境中处理 IPv4 目标地址的代理请求。它会自动将 IPv4 地址转换为嵌入 NAT64 前缀的 IPv6 地址，从而实现兼容性
 1. 启用 NAT64 转换
