@@ -12,7 +12,8 @@
 
 
 
-
+  
+<img width="1416" height="883" alt="image" src="https://github.com/user-attachments/assets/cad00e92-baec-4065-b4ad-01b37c368bc5" />
 
 
 
@@ -231,4 +232,5 @@ Cisco/Juniper：配置 NAT64 池和 DNS64 服务器（如 Cisco ASR 或 Juniper 
 潜在问题：在双栈环境中，优先 IPv6 可能绕过 NAT64；自定义前缀需内部 DNS64 支持。
 
 后续会更新
-  
+
+
