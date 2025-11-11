@@ -10,6 +10,70 @@
 
         KV        =    任何名字（需要在workers kv中添加kv命名空间）
 
+
+
+######################################################################################################################################################################
+# beta分支测试版本  nat64与proxyip独立分开
+在原有基础上独立分离了 NAT64 和 proxyip 参数的处理逻辑。现在可以选择性地启用 NAT64 转换（不影响 proxyip 的反代功能），并支持自定义 NAT64 前缀。假设的 Workers 已部署，URL 为 wss://your-worker.example.com/（或 HTTP/WS，根据配置）
+1. 核心变化概述
+
+NAT64 参数独立：新增 /nat64=前缀 或 ?nat64=前缀 支持（忽略大小写）。这允许单独启用 NAT64，而不干扰 proxyip
+兼容原有 proxyip：如果路径中包含 /proxyip=nat64（或类似），仍会启用 NAT64（作为 fallback），但推荐用新参数
+自定义前缀：参数值为空时，默认用 64:ff9b::；否则用你指定的前缀（自动补 :: 如果缺少）
+优先级：NAT64 只针对目标 host 是 IPv4 时生效；proxyip 用于反代 IP
+不冲突：你可以同时使用 NAT64 和 proxyip（e.g., /nat64=前缀/proxyip=ip:port）
+
+修改不会改变原有功能（如 SOCKS5、订阅等），只需关注路径/查询参数即可。
+2. 使用 NAT64 转换（独立启用）
+
+基本启用（默认前缀）：
+路径格式：/nat64= 或 ?nat64=
+示例 URL：wss://your-worker.example.com/nat64=
+效果：启用 NAT64，使用默认前缀 64:ff9b::。IPv4 目标（如 8.8.8.8）转换为 64:ff9b::808:808
+
+自定义前缀：
+路径格式：/nat64=你的前缀 或 ?nat64=你的前缀
+示例 URL：wss://your-worker.example.com/nat64=2001:db8::
+效果：使用指定前缀 2001:db8::。IPv4 目标转换为 2001:db8::808:808。
+注意：前缀应是有效的 IPv6 前缀（e.g., /96 位）。测试前确保你的网络支持该前缀。
+
+禁用 NAT64：不添加 /nat64= 或 ?nat64= 参数即可（默认不启用）。
+
+3. 使用 proxyip（原有反代 IP 功能）
+
+基本使用：
+路径格式：/proxyip=IP:端口（或变体如 /pyip=IP、?proxyip=IP）。
+示例 URL：wss://your-worker.example.com/proxyip=104.16.0.1:443
+效果：使用指定 IP 和端口作为反代（不启用 NAT64，除非同时指定 nat64 参数）。
+
+自动模式：/proxyip=auto 或不指定，使用默认反代逻辑（基于 CF colo）。
+
+4. 同时使用 NAT64 和 proxyip
+
+示例 URL：wss://your-worker.example.com/nat64=2001:db8::/proxyip=104.16.0.1:443
+效果：反代使用 104.16.0.1:443，且 IPv4 目标应用 NAT64 转换（前缀 2001:db8::）。
+
+5. 与其他参数结合
+
+与 SOCKS5/HTTP：NAT64/proxyip 可以叠加 SOCKS5 参数。
+示例：wss://your-worker.example.com/socks5=你的账号/nat64=64:ff9b::/proxyip=auto
+优先级：SOCKS5 先处理，然后应用 NAT64（如果启用），最后 proxyip。
+
+订阅/管理页面：不影响 /sub 或 /admin 等路径。只有在代理连接时（WS 升级）才会应用 NAT64/proxyip。
+查询参数 vs 路径：?nat64=前缀&proxyip=IP 等价于路径格式，适合 GET 请求。
+
+
+全局启用 NAT64：在 fetch 函数开头添加 nat64Prefix = env.NAT64_PREFIX || null;（null 为禁用）。然后在 Workers Settings > Variables 添加 NAT64_PREFIX 变量（值如 64:ff9b::）。
+添加开关：在 反代参数获取 中添加条件，如如果参数是 /nat64=off，设置 nat64Prefix = null;。
+兼容更多变体：扩展匹配正则，支持 /nat=前缀 等别名（类似 proxyip 的 match）。
+测试修改：本地用 Wrangler CLI 测试（wrangler dev），然后部署
+
+这个版本让 NAT64 和 proxyip 互不干扰，更易选择
+
+#######################################################################################################################################################################
+
+
+
 1. 启用 NAT64 转换
 
 通过路径参数触发：在 WebSocket 代理路径中使用 proxyip 参数（或其变体，如 pyip=、ip=）来启用。
