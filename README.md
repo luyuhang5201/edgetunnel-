@@ -22,7 +22,54 @@
 提升整体处理速度，减少 I/O 操作的等待时间、并行化异步调用
 此版本去除了proxyip基础上的nat64转换
 
+        有自定义uuid的设置可选项，在变量处添加UUID字样设置变量值为要设定的uuid
 
+
+
+        生成uuid方法：
+        cpp代码示例：
+        #include <iostream>
+        #include <random>
+        #include <sstream>
+        #include <iomanip>
+        
+        std::string generate_uuid_v4() {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> dis(0, 15);
+            std::uniform_int_distribution<> dis2(8, 11);
+            
+            std::stringstream ss;
+            
+            // UUID格式: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+            for (int i = 0; i < 32; i++) {
+                if (i == 8 || i == 12 || i == 16 || i == 20) {
+                    ss << "-";
+                }
+                
+                int digit;
+                if (i == 12) {
+                    // 版本4标识
+                    digit = 4;
+                } else if (i == 16) {
+                    // 变体标识 (8, 9, A, B)
+                    digit = dis2(gen);
+                } else {
+                    digit = dis(gen);
+                }
+                
+                ss << std::hex << digit;
+            }
+            
+            return ss.str();
+        }
+        
+        int main() {
+            std::string uuid = generate_uuid_v4();
+            std::cout << "UUID v4: " << uuid << std::endl;
+            return 0;
+        }
+        
 
 ----------------------------------------------------------------------------------------
 
